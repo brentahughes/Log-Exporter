@@ -4,6 +4,12 @@ RUN_FLAG = -d --restart=always
 
 LOG_DIR := /var/log
 
+ifeq ($(shell if [ -f "/var/log/auth.log" ]; then echo yes; fi),yes)
+    LOG_DIR := /var/log/:/logs/
+else
+    LOG_DIR := $(PWD)/test_logs/:/logs/
+endif
+
 build:
 	docker build -t $(APP_NAME) .
 
@@ -19,9 +25,7 @@ remove_container:
 
 define run
 	docker run $(RUN_FLAG) --name $(APP_NAME) -p $(HTTP_PORT):9090 \
-		-v $(LOG_DIR):/logs
-		-v /etc/localtime:/etc/localtime:ro \
-
-
-		$(APP_NAME)
+		-v $(LOG_DIR) \
+		$(APP_NAME) \
+		-auth /logs/auth.log
 endef
