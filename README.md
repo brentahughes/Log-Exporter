@@ -5,3 +5,10 @@ CURRENTLY ONLY SUPPORT auth.log
 
 ### NOTICE
 This will add a label for each hostname, ip_address, process, type, and user which can result in a very large number of metrics to track in prometheus. If your server gets a ton of auth attempts you may want to give prometheus more resources or lower the data retention.
+
+
+## Screenshots
+
+![Auth Attempts](https://raw.githubusercontent.com/bah2830/Log-Exporter/master/images/auth_attempts.png)
+![Invalid Users](https://raw.githubusercontent.com/bah2830/Log-Exporter/master/images/invalid_users.png)
+![By IP Address](https://raw.githubusercontent.com/bah2830/Log-Exporter/master/images/by_ip_address.png)
