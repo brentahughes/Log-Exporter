@@ -11,7 +11,7 @@ endif
 
 REQUEST_LOG_DIR := $(PWD)/test_logs/:/requestLogs/
 ifeq ($(shell if [ -f "/var/log/auth.log" ]; then echo yes; fi),yes)
-    LOG_DIR := $(HOME)/caddy-web-server/logs:/requestLogs/
+    REQUEST_LOG_DIR := $(HOME)/caddy-web-server/logs:/requestLogs/
 endif
 
 build:
@@ -30,6 +30,7 @@ remove_container:
 define run
 	docker run $(RUN_FLAG) --name $(APP_NAME) -p $(HTTP_PORT):9090 \
 		-v $(LOG_DIR) \
+		-v $(REQUEST_LOG_DIR) \
 		$(APP_NAME) \
 		-auth /logs/auth.log \
 		-geodb /app/geoip.mmdb \
