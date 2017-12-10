@@ -21,8 +21,7 @@ func tailFile(e Exporter, debug bool) (*tail.Tail, error) {
 	}
 
 	return tail.TailFile(e.GetFilePath(), tail.Config{
-		Follow:    true,
-		MustExist: true,
-		Location:  location,
+		Follow:   true,
+		Location: location,
 	})
 }
