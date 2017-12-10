@@ -1,7 +1,14 @@
 package exporter
 
 import (
+	"strings"
+
 	"github.com/hpcloud/tail"
+)
+
+var (
+	debug      = false
+	excludeIPs = make([]string, 0)
 )
 
 type Exporter interface {
@@ -24,4 +31,12 @@ func tailFile(e Exporter, debug bool) (*tail.Tail, error) {
 		Follow:   true,
 		Location: location,
 	})
+}
+
+func EnableDebugging() {
+	debug = true
+}
+
+func SetExludeIPs(ips string) {
+	excludeIPs = strings.Split(ips, ",")
 }

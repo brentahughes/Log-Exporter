@@ -4,10 +4,14 @@ RUN_FLAG = -d --restart=always
 
 LOG_DIR := /var/log
 
+LOG_DIR := $(PWD)/test_logs/:/logs/
 ifeq ($(shell if [ -f "/var/log/auth.log" ]; then echo yes; fi),yes)
     LOG_DIR := /var/log/:/logs/
-else
-    LOG_DIR := $(PWD)/test_logs/:/logs/
+endif
+
+REQUEST_LOG_DIR := $(PWD)/test_logs/:/requestLogs/
+ifeq ($(shell if [ -f "/var/log/auth.log" ]; then echo yes; fi),yes)
+    LOG_DIR := $(HOME)/caddy-web-server/logs:/requestLogs/
 endif
 
 build:
@@ -28,5 +32,7 @@ define run
 		-v $(LOG_DIR) \
 		$(APP_NAME) \
 		-auth /logs/auth.log \
-		-geodb /app/geoip.mmdb
+		-geodb /app/geoip.mmdb \
+		-request /requestLogs/access.log \
+		-exluded.ips 63.143.42.243,63.143.42.242
 endef

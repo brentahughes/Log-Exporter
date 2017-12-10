@@ -11,15 +11,15 @@ import (
 )
 
 var (
-	linePrefix = "^(?P<date>[A-Z][a-z]{2}\\s+\\d{1,2}) (?P<time>(\\d{2}:?){3}) (?P<hostname>[a-zA-Z_\\-\\.]+) (?P<processName>[a-zA-Z_\\-]+)(\\[(?P<pid>\\d+)\\])?: "
+	authLinePrefix = "^(?P<date>[A-Z][a-z]{2}\\s+\\d{1,2}) (?P<time>(\\d{2}:?){3}) (?P<hostname>[a-zA-Z_\\-\\.]+) (?P<processName>[a-zA-Z_\\-]+)(\\[(?P<pid>\\d+)\\])?: "
 
-	lineParsers = map[string]*regexp.Regexp{
-		"pamSessionClosed":       regexp.MustCompile(linePrefix + "pam_unix\\(.*\\): session closed for user (?P<username>.*)"),
-		"pamSessionOpened":       regexp.MustCompile(linePrefix + "pam_unix\\(.*\\): session opened for user (?P<username>.*) by"),
-		"noIdentificationString": regexp.MustCompile(linePrefix + "Did not receive identification string from (?P<ipAddress>.*)"),
-		"connectionClosed":       regexp.MustCompile(linePrefix + "Connection closed by (?P<ipAddress>.*) port \\d+"),
-		"maxAuthAttempts":        regexp.MustCompile(linePrefix + "error: maximum authentication attempts exceeded for invalid user (?P<username>.*) from (?P<ipAddress>.*) port \\d+ .*"),
-		"invalidUser":            regexp.MustCompile(linePrefix + "Invalid user (?P<username>.*) from (?P<ipAddress>.*)"),
+	authLineParsers = map[string]*regexp.Regexp{
+		"pamSessionClosed":       regexp.MustCompile(authLinePrefix + "pam_unix\\(.*\\): session closed for user (?P<username>.*)"),
+		"pamSessionOpened":       regexp.MustCompile(authLinePrefix + "pam_unix\\(.*\\): session opened for user (?P<username>.*) by"),
+		"noIdentificationString": regexp.MustCompile(authLinePrefix + "Did not receive identification string from (?P<ipAddress>.*)"),
+		"connectionClosed":       regexp.MustCompile(authLinePrefix + "Connection closed by (?P<ipAddress>.*) port \\d+"),
+		"maxAuthAttempts":        regexp.MustCompile(authLinePrefix + "error: maximum authentication attempts exceeded for invalid user (?P<username>.*) from (?P<ipAddress>.*) port \\d+ .*"),
+		"invalidUser":            regexp.MustCompile(authLinePrefix + "Invalid user (?P<username>.*) from (?P<ipAddress>.*)"),
 	}
 )
 
@@ -43,7 +43,7 @@ type AuthLogLine struct {
 	RawLine   string
 }
 
-func LoadAuthLog(filePath string, debug bool) (*AuthLog, error) {
+func LoadAuthLog(filePath string) (*AuthLog, error) {
 	authLog := &AuthLog{filePath: filePath, Debug: debug}
 
 	authLog.SetupMetrics()
@@ -75,7 +75,7 @@ func (a *AuthLog) ParseLine(line *tail.Line) {
 	matches := make(map[string]string)
 
 	// Find the type of log and parse it
-	for t, re := range lineParsers {
+	for t, re := range authLineParsers {
 		if re.MatchString(line.Text) {
 			log.Printf("Found log for type %s\n", t)
 			parsedLog.Type = t
