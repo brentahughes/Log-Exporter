@@ -167,13 +167,14 @@ func (a *AuthLogLine) AddMetric(metrics metrics) {
 			log.Println("Error getting ip location details", err)
 		}
 
-		fmt.Printf("\n\n%+v\n\n", city)
+		fmt.Println(city.Continent.Names["en"], city.Country.Names["en"], city.City.Names["en"])
+
 		metrics["location"].(*prometheus.CounterVec).With(prometheus.Labels{
 			"continentCode": city.Continent.Code,
-			"continentName": city.Continent.Names["es"],
+			"continentName": city.Continent.Names["en"],
 			"countryCode":   city.Country.IsoCode,
-			"countryName":   city.Country.Names["es"],
-			"city":          city.City.Names["es"],
+			"countryName":   city.Country.Names["en"],
+			"city":          city.City.Names["en"],
 		}).Inc()
 	}
 }
