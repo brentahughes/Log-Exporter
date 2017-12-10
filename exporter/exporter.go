@@ -11,13 +11,18 @@ type Exporter interface {
 	GetFilePath() string
 }
 
-func tailFile(e Exporter) (*tail.Tail, error) {
+func tailFile(e Exporter, debug bool) (*tail.Tail, error) {
+	var location *tail.SeekInfo
+	if !debug {
+		location = &tail.SeekInfo{
+			Offset: 0,
+			Whence: 2,
+		}
+	}
+
 	return tail.TailFile(e.GetFilePath(), tail.Config{
 		Follow:    true,
 		MustExist: true,
-		Location: &tail.SeekInfo{
-			Offset: 0,
-			Whence: 2,
-		},
+		Location:  location,
 	})
 }

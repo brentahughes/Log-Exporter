@@ -1,6 +1,7 @@
 package exporter
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"strconv"
@@ -29,6 +30,7 @@ type AuthLog struct {
 	LastLine    *AuthLogLine
 	fileHandler *tail.Tail
 	Metrics     metrics
+	Debug       bool
 }
 
 type AuthLogLine struct {
@@ -42,8 +44,8 @@ type AuthLogLine struct {
 	RawLine   string
 }
 
-func LoadAuthLog(filePath string) (*AuthLog, error) {
-	authLog := &AuthLog{filePath: filePath}
+func LoadAuthLog(filePath string, debug bool) (*AuthLog, error) {
+	authLog := &AuthLog{filePath: filePath, Debug: debug}
 
 	authLog.SetupMetrics()
 
@@ -52,7 +54,7 @@ func LoadAuthLog(filePath string) (*AuthLog, error) {
 
 func (a *AuthLog) StartExport() error {
 	var err error
-	a.fileHandler, err = tailFile(a)
+	a.fileHandler, err = tailFile(a, a.Debug)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -127,6 +129,13 @@ func (a *AuthLog) SetupMetrics() {
 			},
 			[]string{"hostname", "process", "type", "ip_address", "user"},
 		),
+		"location": prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "log_exporter_auth_locations",
+				Help: "Number of times each location continent/country/city has requested access",
+			},
+			[]string{"continentCode", "continentName", "countryCode", "countryName", "city"},
+		),
 	}
 
 	register(a.Metrics)
@@ -135,6 +144,8 @@ func (a *AuthLog) SetupMetrics() {
 func (a *AuthLog) Close() {
 	a.fileHandler.Stop()
 	a.fileHandler.Cleanup()
+
+	database.Close()
 }
 
 func (a *AuthLog) GetFilePath() string {
@@ -149,4 +160,20 @@ func (a *AuthLogLine) AddMetric(metrics metrics) {
 		"ip_address": a.IPAddress,
 		"user":       a.Username,
 	}).Inc()
+
+	if a.IPAddress != "" && dbPath != "" {
+		city, err := GetIpLocationDetails(a.IPAddress)
+		if err != nil {
+			log.Println("Error getting ip location details", err)
+		}
+
+		fmt.Printf("\n\n%+v\n\n", city)
+		metrics["location"].(*prometheus.CounterVec).With(prometheus.Labels{
+			"continentCode": city.Continent.Code,
+			"continentName": city.Continent.Names["es"],
+			"countryCode":   city.Country.IsoCode,
+			"countryName":   city.Country.Names["es"],
+			"city":          city.City.Names["es"],
+		}).Inc()
+	}
 }
