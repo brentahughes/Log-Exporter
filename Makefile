@@ -27,5 +27,6 @@ define run
 	docker run $(RUN_FLAG) --name $(APP_NAME) -p $(HTTP_PORT):9090 \
 		-v $(LOG_DIR) \
 		$(APP_NAME) \
-		-auth /logs/auth.log
+		-auth /logs/auth.log \
+		-geodb /app/geoip.mmdb
 endef

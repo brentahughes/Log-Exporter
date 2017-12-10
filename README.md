@@ -13,6 +13,18 @@ This will add a label for each hostname, ip_address, process, type, and user whi
 
 By default metrics will be available at localhost:9090/metrics. This can be changed by using the `-port` and `-endpoint` flags for your needs.
 
+### Geo IP
+For location metrics based in the IP addresses found in the log you must have the geoip2 db downloaded somehwere the app can see it.
+
+![GeoIP2 Lite](https://dev.maxmind.com/geoip/geoip2/geolite2/)
+
+Extract mmdb file into the same directory as log-exporter
+
+`./log-exporter -auth /path/to/auth.log -geodb /path/to/geoip2.mmdb`
+
+
+### Debugging
+Use the `-debug` flag to proccess the entire log. This will help scan full file and identify any issues
 
 ## Screenshots
 

@@ -14,16 +14,22 @@ var (
 	promPort     = flag.String("port", "9090", "Port for prometheus metrics to listen on")
 	promEndpoint = flag.String("endpoint", "/metrics", "Endpoint used for metrics")
 	authPath     = flag.String("auth", "", "Path to auth.log")
+	geoIPPath    = flag.String("geodb", "", "Path to the geoip mmdb file. If not set geoIP lookups will not be enabled")
+	debug        = flag.Bool("debug", false, "Run full scan on test logs file")
 )
 
 func main() {
 	flag.Parse()
 
+	if *geoIPPath != "" {
+		exporter.SetGeoIPPath(*geoIPPath)
+	}
+
 	if *authPath == "" {
 		log.Fatalln("A auth.log path is required")
 	}
 
-	authLog, err := exporter.LoadAuthLog(*authPath)
+	authLog, err := exporter.LoadAuthLog(*authPath, *debug)
 	if err != nil {
 		panic(err)
 	}
