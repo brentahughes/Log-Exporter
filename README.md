@@ -9,9 +9,16 @@ This will add a label for each hostname, ip_address, process, type, and user whi
 
 ## Usage
 
-`./log-exporter -auth /path/to/auth.log`
+`./log-exporter -auth.path /path/to/auth.log -request.path /path/to/access.log`
 
-By default metrics will be available at localhost:9090/metrics. This can be changed by using the `-port` and `-endpoint` flags for your needs.
+By default metrics will be available at localhost:9090/metrics. This can be changed by using the `-prometheus.port` and `-prometheus.endpoint` flags for your needs.
+
+### Request Log Format
+I peronsally proxy all http reqeusts through caddy resulting in a single access.log. This also means my access log format will likely be different from yours. You can use the `-request.regexMatch` flag to set your parser.
+
+*My Access Log Format* [{when}] [{host}] [{remote}] [{status}] [{method}] {uri}"
+*The Parser I use* ^\\[.* .0000\\] \\[(?P<domain>.*)\\] \\[(?P<ip_address>[0-9\\.]+)\\] \\[(?P<status>\\d{3})\\] \\[(?P<method>\\w+)\\] .*$
+    - Notice I am using named groups in my regex. Yours will require the same for at least `domain`, `ip_address`, `status`, and `method`. Any others will be ignored.
 
 ### Geo IP
 For location metrics based in the IP addresses found in the log you must have the geoip2 db downloaded somehwere the app can see it.

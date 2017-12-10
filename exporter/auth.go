@@ -48,12 +48,14 @@ func LoadAuthLog(filePath string) (*AuthLog, error) {
 
 	authLog.SetupMetrics()
 
+	exportersRunning = append(exportersRunning, authLog)
+
 	return authLog, nil
 }
 
 func (a *AuthLog) StartExport() error {
 	var err error
-	a.fileHandler, err = tailFile(a, a.Debug)
+	a.fileHandler, err = tailFile(a, a.filePath)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -102,7 +104,7 @@ func (a *AuthLog) ParseLine(line *tail.Line) {
 
 	a.LastLine = parsedLog
 
-	a.LastLine.AddMetric(a.Metrics)
+	addMetric(a, parsedLog.IPAddress)
 }
 
 func getMatches(line string, re *regexp.Regexp) map[string]string {
@@ -147,31 +149,29 @@ func (a *AuthLog) Close() {
 	database.Close()
 }
 
-func (a *AuthLog) GetFilePath() string {
-	return a.filePath
-}
-
-func (a *AuthLogLine) AddMetric(metrics metrics) {
-	metrics["line"].(*prometheus.CounterVec).With(prometheus.Labels{
-		"hostname":   a.Hostname,
-		"process":    a.Process,
-		"type":       a.Type,
-		"ip_address": a.IPAddress,
-		"user":       a.Username,
+func (a *AuthLog) AddMetrics() {
+	a.Metrics["line"].(*prometheus.CounterVec).With(prometheus.Labels{
+		"hostname":   a.LastLine.Hostname,
+		"process":    a.LastLine.Process,
+		"type":       a.LastLine.Type,
+		"ip_address": a.LastLine.IPAddress,
+		"user":       a.LastLine.Username,
 	}).Inc()
 
-	if a.IPAddress != "" && dbPath != "" {
-		city, err := GetIpLocationDetails(a.IPAddress)
+	if a.LastLine.IPAddress != "" && dbPath != "" && !isInternalIP(a.LastLine.IPAddress) {
+		city, err := GetIpLocationDetails(a.LastLine.IPAddress)
 		if err != nil {
 			log.Println("Error getting ip location details", err)
 		}
 
-		metrics["location"].(*prometheus.CounterVec).With(prometheus.Labels{
-			"continentCode": city.Continent.Code,
-			"continentName": city.Continent.Names["en"],
-			"countryCode":   city.Country.IsoCode,
-			"countryName":   city.Country.Names["en"],
-			"city":          city.City.Names["en"],
-		}).Inc()
+		if city.Country.IsoCode != "" {
+			a.Metrics["location"].(*prometheus.CounterVec).With(prometheus.Labels{
+				"continentCode": city.Continent.Code,
+				"continentName": city.Continent.Names["en"],
+				"countryCode":   city.Country.IsoCode,
+				"countryName":   city.Country.Names["en"],
+				"city":          city.City.Names["en"],
+			}).Inc()
+		}
 	}
 }

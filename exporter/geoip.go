@@ -8,8 +8,13 @@ import (
 )
 
 var (
-	dbPath   string
-	database = &GeoIPDatabase{}
+	dbPath          string
+	database        = &GeoIPDatabase{}
+	internalSubnets = []string{
+		"10.0.0.0/8",
+		"172.16.0.0/12",
+		"192.168.0.0/16",
+	}
 )
 
 type GeoIPDatabase struct {
@@ -52,4 +57,15 @@ func GetIpLocationDetails(ipAddress string) (city *geoip2.City, err error) {
 	}
 
 	return city, nil
+}
+
+func isInternalIP(ip string) bool {
+	for _, subnet := range internalSubnets {
+		_, ipNet, _ := net.ParseCIDR(subnet)
+		if ipNet.Contains(net.ParseIP(ip)) {
+			return true
+		}
+	}
+
+	return false
 }

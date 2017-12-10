@@ -37,12 +37,14 @@ func LoadRequestLog(filePath, lineParser string) (*RequestLog, error) {
 
 	requestLog.SetupMetrics()
 
+	exportersRunning = append(exportersRunning, requestLog)
+
 	return requestLog, nil
 }
 
 func (a *RequestLog) StartExport() error {
 	var err error
-	a.fileHandler, err = tailFile(a, a.Debug)
+	a.fileHandler, err = tailFile(a, a.filePath)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -87,16 +89,7 @@ func (a *RequestLog) ParseLine(line *tail.Line) {
 	parsedLog.StatusCode = matches["status"]
 	a.LastLine = parsedLog
 
-	exluded := false
-	for _, IP := range excludeIPs {
-		if IP == parsedLog.IPAddress {
-			exluded = true
-		}
-	}
-
-	if !exluded {
-		a.LastLine.AddMetric(a.Metrics)
-	}
+	addMetric(a, parsedLog.IPAddress)
 }
 
 func (a *RequestLog) SetupMetrics() {
@@ -127,35 +120,28 @@ func (a *RequestLog) Close() {
 	database.Close()
 }
 
-func (a *RequestLog) GetFilePath() string {
-	return a.filePath
-}
-
-func (a *RequestLogLine) AddMetric(metrics metrics) {
-	metrics["line"].(*prometheus.CounterVec).With(prometheus.Labels{
-		"domain": a.Domain,
-		"status": a.StatusCode,
-		"method": a.Method,
+func (a *RequestLog) AddMetrics() {
+	a.Metrics["line"].(*prometheus.CounterVec).With(prometheus.Labels{
+		"domain": a.LastLine.Domain,
+		"status": a.LastLine.StatusCode,
+		"method": a.LastLine.Method,
 	}).Inc()
 
-	if a.IPAddress != "" && dbPath != "" {
-		city, err := GetIpLocationDetails(a.IPAddress)
+	if a.LastLine.IPAddress != "" && dbPath != "" && !isInternalIP(a.LastLine.IPAddress) {
+		city, err := GetIpLocationDetails(a.LastLine.IPAddress)
 		if err != nil {
 			log.Println("Error getting ip location details", err)
 		}
 
 		if city.Country.IsoCode != "" {
-			metrics["location"].(*prometheus.CounterVec).With(prometheus.Labels{
-				"domain":        a.Domain,
+			a.Metrics["location"].(*prometheus.CounterVec).With(prometheus.Labels{
+				"domain":        a.LastLine.Domain,
 				"continentCode": city.Continent.Code,
 				"continentName": city.Continent.Names["en"],
 				"countryCode":   city.Country.IsoCode,
 				"countryName":   city.Country.Names["en"],
 				"city":          city.City.Names["en"],
 			}).Inc()
-		} else {
-			log.Println("No geo ip data found for", a.IPAddress)
 		}
-
 	}
 }

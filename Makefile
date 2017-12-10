@@ -1,8 +1,7 @@
 APP_NAME := log-exporter
 HTTP_PORT := 8990
+EXCLUDED_IPS := 63.143.42.243,63.143.42.242 # Uptime robot ips
 RUN_FLAG = -d --restart=always
-
-LOG_DIR := /var/log
 
 LOG_DIR := $(PWD)/test_logs/:/logs/
 ifeq ($(shell if [ -f "/var/log/auth.log" ]; then echo yes; fi),yes)
@@ -32,8 +31,8 @@ define run
 		-v $(LOG_DIR) \
 		-v $(REQUEST_LOG_DIR) \
 		$(APP_NAME) \
-		-auth /logs/auth.log \
+		-auth.path /logs/auth.log \
+		-request.path /requestLogs/access.log \
 		-geodb /app/geoip.mmdb \
-		-request /requestLogs/access.log \
-		-exluded.ips 63.143.42.243,63.143.42.242
+		-exludedIPs $(EXCLUDED_IPS)
 endef
