@@ -1,7 +1,6 @@
 package exporter
 
 import (
-	"fmt"
 	"log"
 	"regexp"
 	"strconv"
@@ -166,8 +165,6 @@ func (a *AuthLogLine) AddMetric(metrics metrics) {
 		if err != nil {
 			log.Println("Error getting ip location details", err)
 		}
-
-		fmt.Println(city.Continent.Names["en"], city.Country.Names["en"], city.City.Names["en"])
 
 		metrics["location"].(*prometheus.CounterVec).With(prometheus.Labels{
 			"continentCode": city.Continent.Code,

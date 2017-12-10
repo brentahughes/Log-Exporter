@@ -28,6 +28,7 @@ Use the `-debug` flag to proccess the entire log. This will help scan full file 
 
 ## Screenshots
 
+![GeoIP Map](https://raw.githubusercontent.com/bah2830/Log-Exporter/master/images/geoip_map.png)
 ![Auth Attempts](https://raw.githubusercontent.com/bah2830/Log-Exporter/master/images/auth_attempts.png)
 ![Invalid Users](https://raw.githubusercontent.com/bah2830/Log-Exporter/master/images/invalid_users.png)
 ![By IP Address](https://raw.githubusercontent.com/bah2830/Log-Exporter/master/images/by_ip_address.png)
