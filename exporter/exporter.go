@@ -56,7 +56,7 @@ func Start() {
 	startPrometheus()
 
 	for _, e := range exportersRunning {
-		e.StartExport()
+		go e.StartExport()
 	}
 }
 

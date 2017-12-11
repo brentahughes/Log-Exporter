@@ -1,6 +1,7 @@
 package exporter
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"time"
@@ -99,7 +100,7 @@ func (a *RequestLog) SetupMetrics() {
 				Name: "log_exporter_request_lines",
 				Help: "Number of lines seen in request file",
 			},
-			[]string{"domain", "method", "status"},
+			[]string{"domain", "method", "status", "internal"},
 		),
 		"location": prometheus.NewCounterVec(
 			prometheus.CounterOpts{
@@ -121,13 +122,16 @@ func (a *RequestLog) Close() {
 }
 
 func (a *RequestLog) AddMetrics() {
+	isInternal := isInternalIP(a.LastLine.IPAddress)
+
 	a.Metrics["line"].(*prometheus.CounterVec).With(prometheus.Labels{
-		"domain": a.LastLine.Domain,
-		"status": a.LastLine.StatusCode,
-		"method": a.LastLine.Method,
+		"domain":   a.LastLine.Domain,
+		"status":   a.LastLine.StatusCode,
+		"method":   a.LastLine.Method,
+		"internal": fmt.Sprintf("%t", isInternal),
 	}).Inc()
 
-	if a.LastLine.IPAddress != "" && dbPath != "" && !isInternalIP(a.LastLine.IPAddress) {
+	if a.LastLine.IPAddress != "" && dbPath != "" && !isInternal {
 		city, err := GetIpLocationDetails(a.LastLine.IPAddress)
 		if err != nil {
 			log.Println("Error getting ip location details", err)

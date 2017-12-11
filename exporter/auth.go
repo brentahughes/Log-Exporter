@@ -1,6 +1,7 @@
 package exporter
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"strconv"
@@ -79,7 +80,6 @@ func (a *AuthLog) ParseLine(line *tail.Line) {
 	// Find the type of log and parse it
 	for t, re := range authLineParsers {
 		if re.MatchString(line.Text) {
-			log.Printf("Found log for type %s\n", t)
 			parsedLog.Type = t
 			matches = getMatches(line.Text, re)
 			continue
@@ -128,7 +128,7 @@ func (a *AuthLog) SetupMetrics() {
 				Name: "log_exporter_auth_lines",
 				Help: "Number of lines seen in auth file",
 			},
-			[]string{"hostname", "process", "type", "ip_address", "user"},
+			[]string{"hostname", "type", "user", "internal"},
 		),
 		"location": prometheus.NewCounterVec(
 			prometheus.CounterOpts{
@@ -150,15 +150,16 @@ func (a *AuthLog) Close() {
 }
 
 func (a *AuthLog) AddMetrics() {
+	isInternal := isInternalIP(a.LastLine.IPAddress)
+
 	a.Metrics["line"].(*prometheus.CounterVec).With(prometheus.Labels{
-		"hostname":   a.LastLine.Hostname,
-		"process":    a.LastLine.Process,
-		"type":       a.LastLine.Type,
-		"ip_address": a.LastLine.IPAddress,
-		"user":       a.LastLine.Username,
+		"hostname": a.LastLine.Hostname,
+		"type":     a.LastLine.Type,
+		"user":     a.LastLine.Username,
+		"internal": fmt.Sprintf("%t", isInternal),
 	}).Inc()
 
-	if a.LastLine.IPAddress != "" && dbPath != "" && !isInternalIP(a.LastLine.IPAddress) {
+	if a.LastLine.IPAddress != "" && dbPath != "" && !isInternal {
 		city, err := GetIpLocationDetails(a.LastLine.IPAddress)
 		if err != nil {
 			log.Println("Error getting ip location details", err)
