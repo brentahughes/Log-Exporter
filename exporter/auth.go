@@ -23,6 +23,19 @@ var (
 		"invalidUser":            regexp.MustCompile(authLinePrefix + "Invalid user (?P<username>.*) from (?P<ipAddress>.*)"),
 		"userNotAllowed":         regexp.MustCompile(authLinePrefix + "User (?P<username>.*) from (?P<ipAddress>.*) not allowed because not listed in .*"),
 	}
+
+	ignoredLineParsers = []*regexp.Regexp{
+		regexp.MustCompile(authLinePrefix + "(error: )?Received disconnect from .*"),
+		regexp.MustCompile(authLinePrefix + "Disconnected from .*"),
+		regexp.MustCompile(authLinePrefix + "input_userauth_request: invalid user .*"),
+		regexp.MustCompile(authLinePrefix + "fatal: Unable to negotiate with .*"),
+		regexp.MustCompile(authLinePrefix + "Disconnecting: Too many authentication failures .*"),
+		regexp.MustCompile(authLinePrefix + "Connection reset by .*"),
+		regexp.MustCompile(authLinePrefix + "Bad protocol version identification .*"),
+		regexp.MustCompile(authLinePrefix + "New session \\d+ of user .*"),
+		regexp.MustCompile(authLinePrefix + "Removed session .*"),
+		regexp.MustCompile(authLinePrefix + "Accepted publickey for .*"),
+	}
 )
 
 type AuthLog struct {
@@ -88,6 +101,11 @@ func (a *AuthLog) ParseLine(line *tail.Line) {
 	}
 
 	if len(matches) == 0 {
+		for _, re := range ignoredLineParsers {
+			if re.MatchString(line.Text) {
+				return
+			}
+		}
 		log.Println("Unknown log type", line.Text)
 		return
 	}
