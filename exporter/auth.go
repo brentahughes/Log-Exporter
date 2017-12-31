@@ -15,10 +15,8 @@ var (
 	authLinePrefix = "^(?P<date>[A-Z][a-z]{2}\\s+\\d{1,2}) (?P<time>(\\d{2}:?){3}) (?P<hostname>[a-zA-Z_\\-\\.]+) (?P<processName>[a-zA-Z_\\-]+)(\\[(?P<pid>\\d+)\\])?: "
 
 	authLineParsers = map[string]*regexp.Regexp{
-		"pamSessionClosed":       regexp.MustCompile(authLinePrefix + "pam_unix\\(.*\\): session closed for user (?P<username>.*)"),
 		"pamSessionOpened":       regexp.MustCompile(authLinePrefix + "pam_unix\\(.*\\): session opened for user (?P<username>.*) by"),
 		"noIdentificationString": regexp.MustCompile(authLinePrefix + "Did not receive identification string from (?P<ipAddress>.*)"),
-		"connectionClosed":       regexp.MustCompile(authLinePrefix + "Connection closed by (?P<ipAddress>.*) port \\d+"),
 		"maxAuthAttempts":        regexp.MustCompile(authLinePrefix + "error: maximum authentication attempts exceeded for invalid user (?P<username>.*) from (?P<ipAddress>.*) port \\d+ .*"),
 		"invalidUser":            regexp.MustCompile(authLinePrefix + "Invalid user (?P<username>.*) from (?P<ipAddress>.*)"),
 		"userNotAllowed":         regexp.MustCompile(authLinePrefix + "User (?P<username>.*) from (?P<ipAddress>.*) not allowed because not listed in .*"),
@@ -35,6 +33,8 @@ var (
 		regexp.MustCompile(authLinePrefix + "New session \\d+ of user .*"),
 		regexp.MustCompile(authLinePrefix + "Removed session .*"),
 		regexp.MustCompile(authLinePrefix + "Accepted publickey for .*"),
+		regexp.MustCompile(authLinePrefix + ".* session closed for user .*"),
+		regexp.MustCompile(authLinePrefix + "Connection closed by .*"),
 	}
 )
 
