@@ -21,6 +21,7 @@ var (
 		"connectionClosed":       regexp.MustCompile(authLinePrefix + "Connection closed by (?P<ipAddress>.*) port \\d+"),
 		"maxAuthAttempts":        regexp.MustCompile(authLinePrefix + "error: maximum authentication attempts exceeded for invalid user (?P<username>.*) from (?P<ipAddress>.*) port \\d+ .*"),
 		"invalidUser":            regexp.MustCompile(authLinePrefix + "Invalid user (?P<username>.*) from (?P<ipAddress>.*)"),
+		"userNotAllowed":         regexp.MustCompile(authLinePrefix + "User (?P<username>.*) from (?P<ipAddress>.*) not allowed because not listed in .*"),
 	}
 )
 
@@ -87,6 +88,7 @@ func (a *AuthLog) ParseLine(line *tail.Line) {
 	}
 
 	if len(matches) == 0 {
+		log.Println("Unknown log type", line.Text)
 		return
 	}
 
