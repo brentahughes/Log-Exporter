@@ -30,6 +30,7 @@ func tailFile(e Exporter, filePath string) (*tail.Tail, error) {
 	return tail.TailFile(filePath, tail.Config{
 		Follow:   true,
 		Location: location,
+		ReOpen:   true,
 	})
 }
 
